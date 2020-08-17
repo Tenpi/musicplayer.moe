@@ -38,4 +38,16 @@ export default class Functions {
     const formula = Number(Math.exp(maxValue + scale*(position-minPos)).toFixed(2))
     return formula*-1 + originalMin
   }
+
+  /** Format Seconds */
+  public static formatSeconds = (duration: number) => {
+    let seconds = Math.floor(duration % 60) as any
+    let minutes = Math.floor((duration / 60) % 60) as any
+    let hours = Math.floor((duration / (60 * 60)) % 24) as any
+
+    hours = (hours === 0) ? "" : ((hours < 10) ? "0" + hours + ":" : hours + ":")
+    minutes = hours && (minutes < 10) ? "0" + minutes : minutes
+    seconds = (seconds < 10) ? "0" + seconds : seconds
+    return `${hours}${minutes}:${seconds}`
+  }
 }

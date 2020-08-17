@@ -4,8 +4,7 @@ import Main from "./components/Main"
 import ScrollToTop from "./components/ScrollToTop"
 import "./index.less"
 
-export default class App extends Component {
-  public render = () => {
+const App: React.FunctionComponent = () => {
     return (
       <div onTouchStart={() => ""}>
         <Router>
@@ -17,5 +16,6 @@ export default class App extends Component {
         </Router>
       </div>
     )
-  }
 }
+
+export default App
