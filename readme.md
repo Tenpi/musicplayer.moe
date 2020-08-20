@@ -1,6 +1,6 @@
-## Still a WIP!
+## This is a WIP! Come back soon.
 
-This is an audio player with many cool effects.
+This is a music player with many cool effects.
 
 ### Features:
 -Play, pause, stop, loop, and seek audio
