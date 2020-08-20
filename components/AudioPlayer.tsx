@@ -5,8 +5,7 @@ import encodeWAV from "audiobuffer-to-wav"
 import func from "../structures/Functions"
 const RangeSlider = Slider.Range
 
-const Main: React.FunctionComponent = (props) => {
-    const player = useRef(null) as React.RefObject<HTMLAudioElement>
+const AudioPlayer: React.FunctionComponent = (props) => {
     const progressBar = useRef(null) as React.RefObject<HTMLProgressElement>
     const loopButton = useRef(null) as React.RefObject<HTMLButtonElement>
     const speedBar = useRef(null) as React.RefObject<HTMLInputElement>
@@ -27,7 +26,7 @@ const Main: React.FunctionComponent = (props) => {
         loop: false,
         abloop: false,
         loopStart: 0,
-        loopEnd: 100,
+        loopEnd: 0,
         grainPlayer: true,
         duration: 0,
         song: "",
@@ -37,17 +36,18 @@ const Main: React.FunctionComponent = (props) => {
     const initialState = {...state}
 
     let source = new Tone.GrainPlayer().sync().start().toDestination()
-    let playerSource = new Tone.Player().sync().start()
+    let player = new Tone.Player().sync().start()
     source.grainSize = 0.1
+    source.overlap = 0.1
 
     const duration = () => {
-        const current = state.grainPlayer ? source : playerSource
+        const current = state.grainPlayer ? source : player
         state.duration = current.buffer.duration / current.playbackRate
         secondsTotal.current!.innerText = func.formatSeconds(state.duration)
     }
 
     const checkBuffer = () => {
-        const current = state.grainPlayer ? source : playerSource
+        const current = state.grainPlayer ? source : player
         return current.buffer.loaded
     }
 
@@ -56,6 +56,12 @@ const Main: React.FunctionComponent = (props) => {
         await Tone.start()
         await Tone.loaded()
         duration()
+        const progress = Math.round(Number(progressBar.current?.value))
+        if (state.reverse === true) {
+            if (progress === 0) stop()
+        } else {
+            if (progress === 100) stop()
+        }
         if (Tone.Transport.state === "started") {
             Tone.Transport.pause()
         } else {
@@ -65,6 +71,7 @@ const Main: React.FunctionComponent = (props) => {
 
     const stop = () => {
         if (!checkBuffer()) return
+        if (Tone.Transport.state === "stopped") return
         Tone.Transport.stop()
     }
 
@@ -81,27 +88,25 @@ const Main: React.FunctionComponent = (props) => {
     const speed = async (event?: React.ChangeEvent<HTMLInputElement>, applyState?: any) => {
         if (event) state.speed = Number(event.target.value)
         let currentSource = source
-        let currentPlayer = playerSource
-        let current: any
+        let currentPlayer = player
         if (applyState) {
             currentSource = applyState.source
-            currentPlayer = applyState.playerSource
+            currentPlayer = applyState.player
         }
         if (!state.speedBox) {
             state.grainPlayer = false
             currentPlayer.playbackRate = state.speed
             currentSource.disconnect()
             currentPlayer.disconnect().toDestination()
-            current = currentPlayer
         } else {
             state.grainPlayer = true
             currentSource.playbackRate = state.speed
             currentPlayer.disconnect()
             currentSource.disconnect().toDestination()
-            current = currentSource
         }
-        state.duration  = (current.buffer.duration / current.playbackRate)
-        let seconds = Tone.Transport.seconds / current.playbackRate
+        let percent = Tone.Transport.seconds / state.duration
+        state.duration  = (source.buffer.duration / state.speed)
+        Tone.Transport.seconds = percent * state.duration
         if (state.abloop) {
             applyAB(state.duration)
         } else {
@@ -109,9 +114,9 @@ const Main: React.FunctionComponent = (props) => {
         }   
         secondsTotal.current!.innerText = func.formatSeconds(state.duration)
         if (state.reverse === true) {
-            secondsProgress.current!.innerText = func.formatSeconds(state.duration - seconds)
+            secondsProgress.current!.innerText = func.formatSeconds(state.duration - Tone.Transport.seconds)
         } else {
-            secondsProgress.current!.innerText = func.formatSeconds(seconds)
+            secondsProgress.current!.innerText = func.formatSeconds(Tone.Transport.seconds)
         }
     }
 
@@ -130,13 +135,13 @@ const Main: React.FunctionComponent = (props) => {
         state.song = song
         state.songName = songName
         source.playbackRate = state.speed
-        playerSource.playbackRate = state.speed
+        player.playbackRate = state.speed
         speedBar.current!.value = String(state.speed)
         speedCheckbox.current!.checked = state.speedBox
         source.detune = state.pitch
         pitchBar.current!.value = String(state.pitch)
         source.reverse = state.reverse
-        playerSource.reverse = state.reverse
+        player.reverse = state.reverse
         Tone.Transport.loop = state.loop
         loopButton.current!.innerText = "Loop Off"
         abSlider.current.sliderRef.childNodes[1].style = "left: 0%; right: auto; width: 100%;"
@@ -145,7 +150,7 @@ const Main: React.FunctionComponent = (props) => {
         abSlider.current.sliderRef.childNodes[4].ariaValueNow = "100"
         abSlider.current.sliderRef.childNodes[4].style = "left: 100%; right: auto; transform: translateX(-50%);"
         abSlider.current.sliderRef.style.display = "none"
-        playerSource.disconnect()
+        player.disconnect()
         source.disconnect().toDestination()
     }
 
@@ -155,6 +160,7 @@ const Main: React.FunctionComponent = (props) => {
             state.loop = false
             Tone.Transport.loop = false
             loopButton.current!.innerText = "Loop Off"
+            if (state.abloop) toggleAB()
         } else {
             state.loop = true
             Tone.Transport.loop = true
@@ -166,10 +172,10 @@ const Main: React.FunctionComponent = (props) => {
 
     const reverse = async (applyState?: any) => {
         let currentSource = source
-        let currentPlayer = playerSource
+        let currentPlayer = player
         if (applyState) {
             currentSource = applyState.source
-            currentPlayer = applyState.playerSource
+            currentPlayer = applyState.player
         }
         let percent = Tone.Transport.seconds / state.duration
         if (state.reverse === true || applyState) {
@@ -189,40 +195,32 @@ const Main: React.FunctionComponent = (props) => {
     useEffect(() => {
         /*Update Progress*/
         window.setInterval(() => {
-            const current = state.grainPlayer ? source : playerSource
-            let seconds = Tone.Transport.seconds
-            let percent = seconds / state.duration
+            let percent = (Tone.Transport.seconds / state.duration)
             if (!Number.isFinite(percent)) return
             if (state.reverse === true) {
                 progressBar.current!.value = (1-percent) * 100
-                if (Tone.Transport.seconds !== state.duration) {
-                    secondsProgress.current!.innerText = func.formatSeconds(state.duration - seconds)
-                }
+                secondsProgress.current!.innerText = func.formatSeconds(state.duration - Tone.Transport.seconds)
             } else {
                 progressBar.current!.value = percent * 100
-                if (Tone.Transport.seconds !== state.duration) {
-                    secondsProgress.current!.innerText = func.formatSeconds(seconds)
-                }
+                secondsProgress.current!.innerText = func.formatSeconds(Tone.Transport.seconds)
             }
-            if (!state.loop && !state.abloop && Tone.Transport.state === "started") {
-                const progress = Number(progressBar.current?.value)
-                if (state.reverse === true) {
-                    if (progress === 0) stop()
-                } else {
-                    if (progress === 100) stop()
+            if (!state.loop) {
+                if (Tone.Transport.seconds > state.duration - 1) {
+                    Tone.Transport.pause()
+                    Tone.Transport.seconds = Math.round(state.duration) - 1
                 }
+                if (Tone.Transport.seconds === Math.round(state.duration) - 1) Tone.Transport.seconds = Math.round(state.duration)
             }
         }, 1000)
-        /** Store state */
+        /** Store state
         window.onbeforeunload = () => {
             localStorage.setItem("state", JSON.stringify(state))
-        }
+        } */
         return window.clearInterval()
     }, [])
 
     const seek = (event: React.MouseEvent<HTMLProgressElement>) => {
         let percent = event.nativeEvent.offsetX / progressBar.current!.offsetWidth
-        let current = state.grainPlayer ? source : playerSource
         progressBar.current!.value = percent * 100
         if (state.reverse === true) {
             Tone.Transport.seconds = (1-percent) * state.duration
@@ -231,6 +229,7 @@ const Main: React.FunctionComponent = (props) => {
             Tone.Transport.seconds = percent * state.duration
             secondsProgress.current!.innerText = func.formatSeconds(Tone.Transport.seconds)
         }
+        if (Tone.Transport.state === "paused") play()
     }
 
     const pitch = async (event?: React.ChangeEvent<HTMLInputElement>) => {
@@ -239,13 +238,13 @@ const Main: React.FunctionComponent = (props) => {
     }
 
     const upload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        window.URL.revokeObjectURL(state.song)
+        //window.URL.revokeObjectURL(state.song)
         const file = event.target.files?.[0]
         if (!file) return
         state.songName = file.name
         state.song = window.URL.createObjectURL(file)
         await source.buffer.load(state.song)
-        await playerSource.load(state.song)
+        await player.load(state.song)
         await Tone.loaded()
         duration()
         if (Tone.Transport.state === "stopped") {
@@ -279,25 +278,28 @@ const Main: React.FunctionComponent = (props) => {
         if (abSlider.current.sliderRef.style.display === "none" || applyState) {
             abSlider.current.sliderRef.style.display = "flex"
             state.abloop = true
+            state.loop = true
+            if (!state.loopEnd) state.loopEnd = state.duration
             Tone.Transport.loop = true
             Tone.Transport.loopStart = state.loopStart
             Tone.Transport.loopEnd = state.loopEnd
+            loopButton.current!.innerText = "Loop On"
         } else {
             abSlider.current.sliderRef.style.display = "none"
-            state.abloop = false
             Tone.Transport.loop = false
+            state.abloop = false
             state.loop = false
             loopButton.current!.innerText = "Loop Off"
         }
     }
 
-    const applyState = async (state: any, source: Tone.GrainPlayer, playerSource: Tone.Player, reload?: boolean) => {
-        const apply = {state, source, playerSource}
+    const applyState = async (state: any, source: Tone.GrainPlayer, player: Tone.Player, reload?: boolean) => {
+        const apply = {state, source, player}
         if (reload && state.song) {
             console.log(state.song)
             const decoded = atob(state.song)
             await source.buffer.load(decoded)
-            await playerSource.load(decoded)
+            await player.load(decoded)
             await Tone.loaded()
         }
         if (state.speed !== 1) {
@@ -312,16 +314,16 @@ const Main: React.FunctionComponent = (props) => {
         if (state.abloop !== false) {
             toggleAB(true)
         }
-        return state.grainPlayer ? source : playerSource
+        return state.grainPlayer ? source : player
     }
 
      /** Renders the same as online */
      const render = async (duration: number) => {
         return Tone.Offline(async ({transport}) => {
             let source = new Tone.GrainPlayer().sync().start().toDestination()
-            let playerSource = new Tone.Player().sync().start()
+            let player = new Tone.Player().sync().start()
             source.grainSize = 0.1
-            const current = await applyState(state, source, playerSource, true)
+            const current = await applyState(state, source, player, true)
             current.start()
             transport.start()
         }, duration)
@@ -350,7 +352,7 @@ const Main: React.FunctionComponent = (props) => {
         if (!savedState) return
         const oldSong = state.song
         state = {...JSON.parse(savedState)}
-        applyState(state, source, playerSource, oldSong !== state.song)
+        applyState(state, source, player, oldSong !== state.song)
         loop()
         volume()
         speedCheckbox.current!.checked = state.speedBox
@@ -363,7 +365,6 @@ const Main: React.FunctionComponent = (props) => {
 
     return (
         <div>
-            <audio ref={player}></audio>
             <button onClick={() => play()}>Play</button>
             <button onClick={() => stop()}>Stop</button>
             <button onClick={() => reverse()}>Reverse</button>
@@ -384,4 +385,4 @@ const Main: React.FunctionComponent = (props) => {
     )
 }
 
-export default Main
+export default AudioPlayer
