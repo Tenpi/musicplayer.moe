@@ -1,7 +1,7 @@
 {
-  "name": "audio-player",
+  "name": "music-player",
   "version": "0.0.1",
-  "description": "An audio player",
+  "description": "A music player",
   "main": "server.js",
   "type": "module",
   "scripts": {
@@ -16,6 +16,7 @@
   "author": "Tenpi",
   "license": "MIT",
   "dependencies": {
+    "@soundtouchjs/audio-worklet": "^0.1.6",
     "@types/express": "^4.17.7",
     "@types/jquery": "^3.5.1",
     "@types/less": "^3.0.1",
@@ -49,6 +50,7 @@
     "react-dom": "^16.13.1",
     "react-router-dom": "^5.2.0",
     "react-string-replace": "^0.4.4",
+    "regenerator-runtime": "^0.13.7",
     "rsuite": "^4.8.0",
     "terser-webpack-plugin": "^4.1.0",
     "tone": "^14.7.39",
@@ -58,6 +60,7 @@
     "webpack-cli": "^3.3.12",
     "webpack-dev-middleware": "^3.7.2",
     "webpack-hot-middleware": "^2.25.0",
-    "webpack-node-externals": "^2.5.1"
+    "webpack-node-externals": "^2.5.1",
+    "worklet-loader": "^1.0.0"
   }
 }

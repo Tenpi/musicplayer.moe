@@ -44,6 +44,9 @@ export default class Functions {
     let seconds = Math.floor(duration % 60) as any
     let minutes = Math.floor((duration / 60) % 60) as any
     let hours = Math.floor((duration / (60 * 60)) % 24) as any
+    if (Number.isNaN(seconds)) seconds = 0
+    if (Number.isNaN(minutes)) minutes = 0
+    if (Number.isNaN(hours)) hours = 0
 
     hours = (hours === 0) ? "" : ((hours < 10) ? "0" + hours + ":" : hours + ":")
     minutes = hours && (minutes < 10) ? "0" + minutes : minutes
