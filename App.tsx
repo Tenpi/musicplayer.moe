@@ -1,17 +1,16 @@
-import React, {Component} from "react"
+import React from "react"
 import {BrowserRouter as Router, Switch, Route} from "react-router-dom"
-import AudioPlayer from "./components/AudioPlayer"
-import "./index.less"
+import HomePage from "./components/HomePage"
+import $404 from "./components/404"
 
 const App: React.FunctionComponent = () => {
     return (
-      <div onTouchStart={() => ""}>
         <Router>
           <Switch>
-            <Route path="*"><AudioPlayer/></Route>
+            <Route exact path="/"><HomePage/></Route>
+            <Route path="*"><$404/></Route>
           </Switch>
         </Router>
-      </div>
     )
 }
 

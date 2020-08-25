@@ -53,4 +53,22 @@ export default class Functions {
     seconds = (seconds < 10) ? "0" + seconds : seconds
     return `${hours}${minutes}:${seconds}`
   }
+
+  /* Decode HTML entities */
+  public static decodeEntities(encodedString: string) {
+    const regex = /&(nbsp|amp|quot|lt|gt);/g
+    const translate = {
+        nbsp:" ",
+        amp : "&",
+        quot: "\"",
+        lt  : "<",
+        gt  : ">"
+    }
+    return encodedString.replace(regex, function(match, entity) {
+        return translate[entity]
+    }).replace(/&#(\d+);/gi, function(match, numStr) {
+        const num = parseInt(numStr, 10)
+        return String.fromCharCode(num)
+    })
+  }
 }

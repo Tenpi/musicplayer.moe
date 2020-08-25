@@ -1,7 +1,52 @@
 @import "~rc-slider/assets/index.css";
+@import url("https://fonts.googleapis.com/css2?family=Skranji&display=swap");
 
-html {
-    padding: 1rem;
+:root {
+    --background: white;
+    --background404: white;
+    --text404: black;
+    --image404: none;
+}
+
+.dark-theme {
+    --background: black;
+    --background404: #020202;
+    --text404: white;
+    --image404: 0.2vw solid white;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: black;
+}
+
+#app {
+    background-color: var(--background);
+}
+
+::selection {
+    background-color: #ff30be;
+    color: white;
+}
+
+::-webkit-scrollbar {
+    width: 1vw;
+}
+  
+::-webkit-scrollbar-track {
+    background: #000000;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #5a5a5a;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #303030;
 }
 
 .rc-slider {

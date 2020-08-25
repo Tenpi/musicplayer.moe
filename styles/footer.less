@@ -1,0 +1,49 @@
+@import "../index.less";
+
+.footer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #f8254d;
+}
+
+.footer-container {
+    margin-top: 1rem;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+}
+
+.footer-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.footer-text {
+    font-family: "Skranji", sans-serif;
+    color: black;
+    font-size: 3rem;
+}
+
+.copyright-text {
+    .footer-text();
+    font-size: 1.5rem;
+}
+
+.footer-img {
+    margin-top: 2rem;
+    transition: all 0.1s;
+    &:hover {
+        cursor: pointer;
+        filter: invert(1);
+    }
+}
+
+.hibiki-chibi {
+    max-width: 70%;
+    &:active {
+        filter: brightness(110%);
+    }
+}

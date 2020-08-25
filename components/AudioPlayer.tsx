@@ -3,7 +3,21 @@ import Slider from "rc-slider"
 import * as Tone from "tone"
 import encodeWAV from "audiobuffer-to-wav"
 import func from "../structures/Functions"
-const RangeSlider = Slider.Range
+import searchIcon from "../assets/icons/search-icon.png"
+import waveform from "../assets/images/wave-placeholder.png"
+import playIcon from "../assets/icons/play.png"
+import pauseIcon from "../assets/icons/pause.png"
+import stopIcon from "../assets/icons/stop.png"
+import reverseIcon from "../assets/icons/reverse.png"
+import speedIcon from "../assets/icons/speed.png"
+import pitchIcon from "../assets/icons/pitch.png"
+import loopIcon from "../assets/icons/loop.png"
+import abLoopIcon from "../assets/icons/abloop.png"
+import eqIcon from "../assets/icons/eq.png"
+import fxIcon from "../assets/icons/fx.png"
+import resetIcon from "../assets/icons/clear.png"
+import volumeIcon from "../assets/icons/volume.png"
+import "../styles/audioplayer.less"
 
 const AudioPlayer: React.FunctionComponent = (props) => {
     const progressBar = useRef(null) as React.RefObject<HTMLProgressElement>
@@ -16,6 +30,10 @@ const AudioPlayer: React.FunctionComponent = (props) => {
     const secondsProgress = useRef(null) as React.RefObject<HTMLSpanElement>
     const secondsTotal = useRef(null) as React.RefObject<HTMLSpanElement>
     const abSlider = useRef(null) as React.RefObject<any>
+    const searchBox = useRef(null) as React.RefObject<HTMLInputElement>
+    const reverbMix = useRef(null) as React.RefObject<HTMLInputElement>
+    const playButton = useRef(null) as React.RefObject<HTMLImageElement>
+    const volumePopup = useRef(null) as React.RefObject<HTMLDivElement>
 
     let state = {
         reverse: false,
@@ -30,7 +48,13 @@ const AudioPlayer: React.FunctionComponent = (props) => {
         grainPlayer: true,
         duration: 0,
         song: "",
-        songName: ""
+        songName: "",
+        editCode: "",
+        effects: [] as {type: string, node: Tone.ToneAudioNode}[],
+        reverb: false,
+        reverbMix: 0,
+        reverbDecay: 1.5,
+        reverbPreDelay: 0.01
     }
 
     const initialState = {...state}
@@ -39,6 +63,44 @@ const AudioPlayer: React.FunctionComponent = (props) => {
     let player = new Tone.Player().sync().start()
     source.grainSize = 0.1
     source.overlap = 0.1
+
+    const removeEffect = (type: string) => {
+        const index = state.effects.findIndex((e) => e.type === type)
+        if (index !== -1) {
+            state.effects[index] = null as any
+            state.effects = state.effects.filter(Boolean)
+        }
+    }
+
+    const pushEffect = (type: string, node: Tone.ToneAudioNode) => {
+        const obj = {type, node}
+        const index = state.effects.findIndex((e) => e.type === type)
+        if (index !== -1) {
+            state.effects[index] = obj
+        } else {
+            state.effects.push(obj)
+        }
+    }
+    
+    const applyEffects = (applyState?: any) => {
+        let currentSource = source
+        let currentPlayer = player 
+        if (applyState) {
+            currentSource = applyState.source 
+            currentPlayer = applyState.player
+        }
+        currentSource.disconnect()
+        currentPlayer.disconnect()
+        const nodes = state.effects.map((e) => e.node)
+        currentSource.chain(...nodes)
+        currentPlayer.chain(...nodes)
+        const current = state.grainPlayer ? currentSource : currentPlayer
+        if (state.effects[0]) {
+            nodes[nodes.length - 1].toDestination()
+        } else {
+            current.toDestination()
+        }
+    }
 
     const duration = () => {
         const current = state.grainPlayer ? source : player
@@ -96,13 +158,11 @@ const AudioPlayer: React.FunctionComponent = (props) => {
         if (!state.speedBox) {
             state.grainPlayer = false
             currentPlayer.playbackRate = state.speed
-            currentSource.disconnect()
-            currentPlayer.disconnect().toDestination()
+            applyEffects()
         } else {
             state.grainPlayer = true
             currentSource.playbackRate = state.speed
-            currentPlayer.disconnect()
-            currentSource.disconnect().toDestination()
+            applyEffects()
         }
         let percent = Tone.Transport.seconds / state.duration
         state.duration  = (source.buffer.duration / state.speed)
@@ -143,7 +203,6 @@ const AudioPlayer: React.FunctionComponent = (props) => {
         source.reverse = state.reverse
         player.reverse = state.reverse
         Tone.Transport.loop = state.loop
-        loopButton.current!.innerText = "Loop Off"
         abSlider.current.sliderRef.childNodes[1].style = "left: 0%; right: auto; width: 100%;"
         abSlider.current.sliderRef.childNodes[3].ariaValueNow = "0"
         abSlider.current.sliderRef.childNodes[3].style = "left: 0%; right: auto; transform: translateX(-50%);"
@@ -159,12 +218,10 @@ const AudioPlayer: React.FunctionComponent = (props) => {
         if (state.loop === true) {
             state.loop = false
             Tone.Transport.loop = false
-            loopButton.current!.innerText = "Loop Off"
             if (state.abloop) toggleAB()
         } else {
             state.loop = true
             Tone.Transport.loop = true
-            loopButton.current!.innerText = "Loop On"
             Tone.Transport.loopStart = state.abloop ? state.loopStart : 0
             Tone.Transport.loopEnd = state.abloop ? state.loopEnd : state.duration
         }
@@ -173,12 +230,14 @@ const AudioPlayer: React.FunctionComponent = (props) => {
     const reverse = async (applyState?: any) => {
         let currentSource = source
         let currentPlayer = player
+        let skip = false
         if (applyState) {
             currentSource = applyState.source
             currentPlayer = applyState.player
+            skip = true
         }
         let percent = Tone.Transport.seconds / state.duration
-        if (state.reverse === true || applyState) {
+        if (state.reverse === true && !skip) {
             if (!applyState) Tone.Transport.seconds = (1-percent) * state.duration
             state.reverse = false
             currentSource.reverse = false
@@ -216,6 +275,18 @@ const AudioPlayer: React.FunctionComponent = (props) => {
         window.onbeforeunload = () => {
             localStorage.setItem("state", JSON.stringify(state))
         } */
+
+        /*Change play button image*/
+        Tone.Transport.on("pause", () => {
+            if (playButton.current?.src !== playIcon) playButton.current!.src = playIcon
+        })
+        Tone.Transport.on("stop", () => {
+            if (playButton.current?.src !== playIcon) playButton.current!.src = playIcon
+        })
+        Tone.Transport.on("start", () => {
+            if (playButton.current?.src !== pauseIcon) playButton.current!.src = pauseIcon
+        })
+
         return window.clearInterval()
     }, [])
 
@@ -274,8 +345,8 @@ const AudioPlayer: React.FunctionComponent = (props) => {
         Tone.Transport.seconds = Number(Tone.Transport.loopStart)
     }
 
-    const toggleAB = (applyState?: any) => {
-        if (abSlider.current.sliderRef.style.display === "none" || applyState) {
+    const toggleAB = () => {
+        if (abSlider.current.sliderRef.style.display === "none") {
             abSlider.current.sliderRef.style.display = "flex"
             state.abloop = true
             state.loop = true
@@ -283,65 +354,99 @@ const AudioPlayer: React.FunctionComponent = (props) => {
             Tone.Transport.loop = true
             Tone.Transport.loopStart = state.loopStart
             Tone.Transport.loopEnd = state.loopEnd
-            loopButton.current!.innerText = "Loop On"
         } else {
             abSlider.current.sliderRef.style.display = "none"
             Tone.Transport.loop = false
             state.abloop = false
             state.loop = false
-            loopButton.current!.innerText = "Loop Off"
         }
+    }
+
+    const reverb = async (event: React.ChangeEvent<HTMLInputElement>, action: string) => {
+        switch (action) {
+            case "mix":
+                state.reverbMix = Number(event.target.value)
+                break
+            case "delay":
+                state.reverbDecay = Number(event.target.value)
+                break
+            case "predelay":
+                state.reverbPreDelay = Number(event.target.value)
+                break
+        }
+        if (state.reverb && state.reverbMix === 0) {
+            state.reverb = false
+            removeEffect("reverb")
+            return
+        }
+        state.reverb = true
+        const reverb = new Tone.Reverb({wet: state.reverbMix, decay: state.reverbDecay, preDelay: state.reverbPreDelay})
+        pushEffect("reverb", reverb)
+        applyEffects()
     }
 
     const applyState = async (state: any, source: Tone.GrainPlayer, player: Tone.Player, reload?: boolean) => {
         const apply = {state, source, player}
         if (reload && state.song) {
-            console.log(state.song)
-            const decoded = atob(state.song)
-            await source.buffer.load(decoded)
-            await player.load(decoded)
+            await source.buffer.load(state.song)
+            await player.load(state.song)
             await Tone.loaded()
         }
+        console.log("loaded!")
+        let editCode = ""
         if (state.speed !== 1) {
             speed(undefined, apply)
+            editCode += "-speed"
         }
         if (state.reverse !== false) {
             reverse(apply)
+            editCode += "-reverse"
         } 
         if (state.pitch !== 0) {
             pitch()
+            editCode += "-pitch"
         }
         if (state.abloop !== false) {
-            toggleAB(true)
+            editCode += "-loop"
         }
+        state.editCode = editCode
         return state.grainPlayer ? source : player
     }
 
      /** Renders the same as online */
-     const render = async (duration: number) => {
+     const render = async (start: number, duration: number) => {
         return Tone.Offline(async ({transport}) => {
-            let source = new Tone.GrainPlayer().sync().start().toDestination()
-            let player = new Tone.Player().sync().start()
+            let source = new Tone.GrainPlayer().sync()
+            let player = new Tone.Player().sync()
             source.grainSize = 0.1
             const current = await applyState(state, source, player, true)
-            current.start()
-            transport.start()
+            current.start().toDestination()
+            transport.start(start)
         }, duration)
     }
 
     const download = async () => {
         if (!checkBuffer()) return
         await Tone.loaded()
-        const buffer = await render(state.duration)
+        console.log("here")
+        let duration = state.duration
+        let start = 0
+        if (state.abloop) {
+            start = state.loopStart
+            duration = state.loopEnd - state.loopStart
+        }
+        const buffer = await render(start, duration)
+        console.log("buffer done")
         const wav = encodeWAV(buffer)
-        var anchor = document.createElement("a")
-        document.body.appendChild(anchor)
-        anchor.style.display = "none"
+        console.log("wav done")
         const blob = new Blob([new DataView(wav)], {type: "audio/wav"})
         const url = window.URL.createObjectURL(blob)
-        anchor.href = url
-        anchor.download = `${state.songName.slice(0, -4)}.wav`
-        anchor.click()
+        const a = document.createElement("a")
+        document.body.appendChild(a)
+        a.style.display = "none"
+        a.href = url
+        a.download = `${func.decodeEntities(state.songName)}${state.editCode}.wav`
+        a.click()
         window.URL.revokeObjectURL(url)
     }
 
@@ -359,29 +464,91 @@ const AudioPlayer: React.FunctionComponent = (props) => {
         volumeBar.current!.value = String(state.volume)
         pitchBar.current!.value = String(state.pitch)
         speedBar.current!.value = String(state.speed)
-        loopButton.current!.innerText = state.loop ? "Loop On" : "Loop Off"
         */
     }, [])
 
+    const submit = async (event: React.MouseEvent<HTMLButtonElement>) => {
+        event.preventDefault()
+        const value = searchBox.current?.value
+        if (!value) return
+        const response = await fetch("/song", {method: "post", headers: {"Content-Type": "application/json"}, body: JSON.stringify({url: value})}).then((r) => r.text())
+        if (response) {
+            window.URL.revokeObjectURL(state.song)
+            const arrayBuffer = await fetch(response).then((r) => r.arrayBuffer())
+            const blob = new Blob([new DataView(arrayBuffer)], {type: "audio/mpeg"})
+            state.songName = response.replace("assets\\music\\", "").replace(".mp3", "")
+            state.song = window.URL.createObjectURL(blob)
+            await source.buffer.load(state.song)
+            await player.load(state.song)
+            await Tone.loaded()
+            duration()
+            if (Tone.Transport.state === "stopped") {
+                play()
+            } 
+            await fetch("/song", {method: "delete", headers: {"Content-Type": "application/json"}, body: JSON.stringify({url: response})})
+        }
+        searchBox.current!.value = ""
+    }
+
     return (
-        <div>
-            <button onClick={() => play()}>Play</button>
-            <button onClick={() => stop()}>Stop</button>
-            <button onClick={() => reverse()}>Reverse</button>
-            <button ref={loopButton} onClick={() => loop()}>Loop Off</button>
-            <button onClick={() => toggleAB()}>A-B Loop</button>
-            <button onClick={() => reset()}>Reset</button>
-            <button onClick={() => download()}>Download</button>
-            <input type="file" ref={uploadFile} onChange={(event) => upload(event)} style={({display: "none"})} multiple/>
-            <button onClick={() => uploadFile.current?.click()}>Upload</button>
-            <input type="range" ref={speedBar} onChange={(event) => speed(event)} min="0.5" max="4" step="0.5" defaultValue="1"/>
-            <input type="checkbox" ref={speedCheckbox} defaultChecked onChange={() => speedBox()}/>
-            <input type="range" ref={volumeBar} onChange={(event) => volume(event)} min="0" max="1" step="0.05" defaultValue="1"/>
-            <input type="range" ref={pitchBar} onChange={(event) => pitch(event)} min="-24" max="24" step="12" defaultValue="0"/>
-            <br/><br/><progress ref={progressBar} max="100" onClick={(event) => seek(event)} defaultValue="0" value="0"></progress>
-            <p><span ref={secondsProgress}>0:00</span> / <span ref={secondsTotal}>0:00</span></p>
-            <br/><br/><RangeSlider ref={abSlider} min={0} max={100} defaultValue={[0, 100]} onAfterChange={(value) => abloop(value)} style={({display: "none"})}/>
-        </div>
+        <main className="audio-player">
+            {/* Top Buttons */}
+            <section className="player-top-buttons">
+                <input type="file" ref={uploadFile} onChange={(event) => upload(event)} style={({display: "none"})} multiple/>
+                <button onClick={() => uploadFile.current?.click()} className="upload-button"><span>Upload</span></button>
+                <button onClick={() => download()} className="download-button"><span>Download</span></button>
+                <form className="search-bar">
+                    <input type="text" ref={searchBox} placeholder="Soundcloud or Youtube link..." className="search-box" spellCheck="false"/>
+                    <button onClick={(event) => submit(event)} className="search-button"><img src={searchIcon} width="40" height="40" className="search-icon"/></button>
+                </form>
+            </section>
+
+            {/* Player */}
+            <section className="player">
+                <progress ref={progressBar} max="100" onClick={(event) => seek(event)} defaultValue="0" value="0">
+                    <img src={waveform}/>
+                </progress>
+                <div className="ab-bar" style={({display: "none"})}>
+                    <Slider.Range ref={abSlider} min={0} max={100} defaultValue={[0, 100]} onAfterChange={(value) => abloop(value)} style={({display: "none"})}/>
+                </div>
+                <div className="player-buttons">
+                    <img src={playIcon} ref={playButton} onClick={() => play()} width="60" height="60"/>
+                    <img src={stopIcon} onClick={() => stop()} width="60" height="60"/>
+                    <img src={reverseIcon} onClick={() => reverse()} width="60" height="60"/>
+                    <div className="speed-popup" style={({display: "none"})}>
+                        <input type="range" ref={speedBar} onChange={(event) => speed(event)} min="0.5" max="4" step="0.5" defaultValue="1"/>
+                        <input type="checkbox" ref={speedCheckbox} defaultChecked onChange={() => speedBox()}/>
+                    </div>
+                    <img src={speedIcon} onClick={() => ""} width="60" height="60"/>
+                    <div className="pitch-popup" style={({display: "none"})}>
+                        <input type="range" ref={pitchBar} onChange={(event) => pitch(event)} min="-24" max="24" step="12" defaultValue="0"/>
+                    </div>
+                    <img src={pitchIcon} onClick={() => ""} width="60" height="60"/>
+                    <img src={loopIcon} onClick={() => loop()} width="60" height="60"/>
+                    <img src={abLoopIcon} onClick={() => toggleAB()} width="60" height="60"/>
+                    <img src={eqIcon} onClick={() => ""} width="60" height="60"/>
+                    <img src={fxIcon} onClick={() => ""} width="60" height="60"/>
+                    <img src={resetIcon} onClick={() => reset()} width="60" height="60"/>
+                    <div onMouseLeave={() => volumePopup.current!.style.display = "none"}>
+                        <div className="volume-popup" ref={volumePopup} style={({display: "none"})}>
+                            <input type="range" ref={volumeBar} onChange={(event) => volume(event)} min="0" max="1" step="0.05" defaultValue="1" className="volume-range"/>
+                        </div>
+                        <img src={volumeIcon} onMouseEnter={() => volumePopup.current!.style.display = "flex"} width="60" height="60"/>
+                    </div>
+                    <p className="player-text"><span ref={secondsProgress}>0:00</span> <span>/</span> <span ref={secondsTotal}>0:00</span></p>
+                </div>
+            </section>
+            {/*
+            <aside>
+                <p>Reverb</p>
+                <label htmlFor="reverb-mix">Mix</label>
+                <input type="range" id="reverb-mix" onBlur={(event) => reverb(event, "mix")} min="0" max="1" step="0.01" defaultValue="0"/><br/>
+                <label htmlFor="reverb-decay">Decay</label>
+                <input type="range" id="reverb-decay" onBlur={(event) => reverb(event, "decay")} min="1" max="10" step="0.1" defaultValue="1.5"/><br/>
+                <label htmlFor="reverb-predelay">Predelay</label>
+                <input type="range" id="reverb-predelay" onBlur={(event) => reverb(event, "predelay")} min="0.01" max="1" step="0.1" defaultValue="0.01"/><br/>
+            </aside>*/}
+        </main>
     )
 }
 

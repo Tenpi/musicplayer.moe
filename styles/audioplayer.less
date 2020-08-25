@@ -1,0 +1,119 @@
+@import "../index.less";
+
+.audio-player {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.player-top-buttons {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+}
+
+.default-button {
+    border: none;
+    font-family: "Skranji", sans-serif;
+    font-size: 3rem;
+    color: white;
+    margin-left: 1rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    span:hover {
+        cursor: pointer;
+        color: black;
+    }
+}
+
+.upload-button {
+    .default-button();
+    background-color: #3a84ff;
+}
+
+.download-button {
+    .default-button();
+    background-color: #ff466f;
+}
+
+.search-bar {
+    display: flex;
+    margin-left: 1rem;
+    height: 3rem;
+    border: 0.1rem solid #ff228a;
+}
+
+.search-box {
+    width: 45vw;
+    font-size: 2rem;
+    font-family: "Skranji", sans-serif;
+    color: #ff228a;
+    background-color: transparent;
+    border: none;
+    &::placeholder {
+        color: #ff85be;
+    }
+}
+
+.search-button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: none;
+    background-color: #ff228a;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+.search-icon:hover {
+    cursor: pointer;
+    filter: invert(1);
+}
+
+.player {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+}
+
+.player-buttons {
+    display: flex;
+    align-items: center;
+}
+
+.player-text {
+    color: #ff228a;
+    font-family: "Skranji", sans-serif;
+    font-size: 3rem;
+    margin-left: 0.6rem;
+    span:hover {
+        color: #22b9ff;
+    }
+}
+
+.player-buttons img {
+    margin-left: 0.6rem;
+    &:first-child {
+        margin-left: 0;
+    }
+    &:hover {
+        cursor: pointer;
+        filter: hue-rotate(230deg) brightness(120%) ;
+    }
+}
+
+.volume-popup {
+    position: relative;
+    //left: 58rem;
+    //top: 10rem;
+}
+
+.volume-range {
+    position: absolute;
+    left: -1.7rem;
+    bottom: 3.5rem;
+    transform: rotate(270deg);
+}
