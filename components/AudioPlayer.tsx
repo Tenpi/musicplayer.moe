@@ -377,7 +377,7 @@ const AudioPlayer: React.FunctionComponent = (props) => {
     }
 
     const updateMetadata = () => {
-        if (metadataText.current!.style.display === "none") metadataText.current!.style.display = "flex"
+        if (checkBuffer() && metadataText.current!.style.display === "none") metadataText.current!.style.display = "flex"
         songTitle.current!.innerText = state.songName
         songCover.current!.src = state.songCover
         reverseMeta.current!.style.display = state.reverse ? "flex" : "none"
@@ -586,6 +586,20 @@ const AudioPlayer: React.FunctionComponent = (props) => {
         }
         searchBox.current!.value = ""
     }
+
+    /* JS Media Queries */
+    useEffect(() => {
+        const phoneMediaQuery = (query: MediaQueryListEvent | MediaQueryList) => {
+            if (query.matches) {
+                searchBox.current!.placeholder = "YT or SC link..."
+            } else {
+                searchBox.current!.placeholder = "Youtube or Soundcloud link..."
+            }
+        }
+        const media = window.matchMedia("(max-width: 30rem)")
+        media.addListener(phoneMediaQuery)
+        phoneMediaQuery(media)
+    }, [])
 
     return (
         <main className="audio-player">

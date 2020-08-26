@@ -4,6 +4,7 @@
     margin-top: 1rem;
     margin-bottom: 1rem;
     display: flex;
+    width: 100%;
     flex-direction: column;
 }
 
@@ -11,6 +12,7 @@
     display: flex;
     flex-direction: row;
     align-items: flex-end;
+    flex-wrap: wrap;
 }
 
 .default-button {
@@ -91,6 +93,7 @@
     align-items: center;
     justify-content: flex-start;
     margin-top: 2rem;
+    flex-wrap: wrap;
 }
 
 .player-text {
@@ -135,6 +138,7 @@ progress {
     border-radius: 0;
     margin-top: 2rem;
     margin-bottom: 2rem;
+    -webkit-appearance: none;
     &::-webkit-progress-value {
         background-color: #d342ff;
     }
@@ -237,7 +241,7 @@ progress {
 }
 
 .metadata {
-    margin-top: 4rem;
+    margin-top: 1rem;
     display: flex;
     justify-content: center;
     margin-bottom: 2rem;
@@ -277,4 +281,41 @@ progress {
 .meta-text-small {
     .meta-text();
     font-size: 2rem;
+}
+
+@media screen and (max-width: 65rem) {
+    .player-top-buttons {
+        justify-content: center;
+    }
+
+    .search-bar {
+        margin-top: 2rem;
+    }
+
+    .metadata {
+        margin-bottom: 0;
+    }
+
+    .search-box {
+        width: 60vw;
+    }
+}
+
+@media screen and (max-width: 30rem) {
+    .player-top-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .upload-button {
+        margin-bottom: 1rem;
+    }
+
+    .download-button {
+        margin-bottom: 1rem;
+    }
+
+    .player-container {
+        width: 90%;
+    }
 }

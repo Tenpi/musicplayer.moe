@@ -4,7 +4,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    background-color: #f8254d;
+    background-color: #f8257d;
 }
 
 .footer-container {
@@ -12,7 +12,7 @@
     width: 100%;
     display: flex;
     flex-direction: row;
-    justify-content: space-around;
+    justify-content: space-evenly;
 }
 
 .footer-column {
@@ -23,27 +23,46 @@
 
 .footer-text {
     font-family: "Skranji", sans-serif;
+    text-align: center;
     color: black;
     font-size: 3rem;
+    &:active, &:hover {
+        color: white;
+    }
 }
 
 .copyright-text {
     .footer-text();
     font-size: 1.5rem;
+    margin-top: 1rem;
 }
 
 .footer-img {
     margin-top: 2rem;
     transition: all 0.1s;
-    &:hover {
+    height: auto;
+    width: 50%;
+    &:active, &:hover {
         cursor: pointer;
         filter: invert(1);
     }
 }
 
 .hibiki-chibi {
-    max-width: 70%;
+    height: auto;
+    width: 70%;
+    min-width: 7rem;
     &:active {
         filter: brightness(110%);
+    }
+}
+
+@media screen and (max-width: 30rem) {
+    .footer-text {
+        font-size: 2rem;
+    }
+
+    .copyright-text {
+        font-size: 1rem;
     }
 }

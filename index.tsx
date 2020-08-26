@@ -4,4 +4,9 @@ import App from "./App"
 import * as serviceWorker from "./serviceWorker"
 
 ReactDOM.render(<App/>, document.getElementById("app"))
-serviceWorker.unregister()
+
+if (process.env.TESTING === "yes") {
+    serviceWorker.unregister()
+} else {
+    serviceWorker.register()
+}
