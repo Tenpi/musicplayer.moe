@@ -383,30 +383,6 @@ const AudioPlayer: React.FunctionComponent = (props) => {
         reverseMeta.current!.style.display = state.reverse ? "flex" : "none"
         loopMeta.current!.style.display = state.loop ? "flex" : "none"
         abLoopMeta.current!.style.display = state.abloop ? "flex" : "none"
-        /*
-        if ("mediaSession" in navigator) {
-            // @ts-ignore
-            console.log(navigator.mediaSession)
-            // @ts-ignore
-            navigator.mediaSession.metadata = new MediaMetadata({
-              title: state.songName,
-              artwork: [
-                {src: state.songCover, sizes: "128x128", type: "image/png"}
-              ]
-            })
-            // @ts-ignore
-            navigator.mediaSession.setActionHandler("play", () => play())
-            // @ts-ignore
-            navigator.mediaSession.setActionHandler("pause", () => Tone.Transport.pause())
-            // @ts-ignore
-            navigator.mediaSession.setActionHandler("seekbackward", function() {})
-            // @ts-ignore
-            navigator.mediaSession.setActionHandler("seekforward", function() {})
-            // @ts-ignore
-            navigator.mediaSession.setActionHandler("previoustrack", function() {})
-            // @ts-ignore
-            navigator.mediaSession.setActionHandler("nexttrack", function() {})
-      }*/
     }
 
     const upload = async (event: React.ChangeEvent<HTMLInputElement>) => {

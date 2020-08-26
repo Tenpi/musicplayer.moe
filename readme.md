@@ -1,3 +1,7 @@
+## Music Player
+
+![Hibiki](https://github.com/Tenpi/Music-Player/blob/master/assets/images/hibiki-chibi.png?raw=true)
+
 This is a music player with many cool effects.
 
 ### Features:
