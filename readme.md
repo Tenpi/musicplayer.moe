@@ -1,5 +1,3 @@
-## This is a WIP! Come back soon.
-
 This is a music player with many cool effects.
 
 ### Features:
@@ -9,3 +7,5 @@ This is a music player with many cool effects.
 - Time stretching in real time
 - Pitch shifting in real time
 - Render and download the audio
+
+Website: https://weeb-player.herokuapp.com/
