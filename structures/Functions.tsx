@@ -71,4 +71,11 @@ export default class Functions {
         return String.fromCharCode(num)
     })
   }
+
+  /* Round to nearest number */
+  public static round = (value: number, step?: number) => {
+    if (!step) step = 1.0
+    const inverse = 1.0 / step
+    return Math.round(value * inverse) / inverse
+  }
 }

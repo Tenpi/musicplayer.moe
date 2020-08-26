@@ -40,6 +40,7 @@
     "html-webpack-plugin": "^4.3.0",
     "jquery": "^3.5.1",
     "jquery-ui": "^1.12.1",
+    "jsmediatags": "^3.9.3",
     "less": "^3.12.2",
     "less-loader": "^6.2.0",
     "mini-css-extract-plugin": "^0.10.0",
@@ -52,7 +53,7 @@
     "react-string-replace": "^0.4.4",
     "regenerator-runtime": "^0.13.7",
     "rsuite": "^4.8.0",
-    "soundcloud.ts": "^0.2.9",
+    "soundcloud.ts": "^0.3.0",
     "terser-webpack-plugin": "^4.1.0",
     "tone": "^14.7.39",
     "ts-loader": "^8.0.2",
@@ -63,6 +64,6 @@
     "webpack-hot-middleware": "^2.25.0",
     "webpack-node-externals": "^2.5.1",
     "worklet-loader": "^1.0.0",
-    "youtube.ts": "^0.1.6"
+    "youtube.ts": "^0.1.7"
   }
 }

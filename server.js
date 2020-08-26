@@ -40,7 +40,7 @@ app.use("/assets", express.static(path.join(__dirname, "./assets")))
 const youtube = new Youtube.default(process.env.YOUTUBE_API_KEY)
 const soundcloud = new Soundcloud.default(process.env.SOUNDCLOUD_CLIENT_ID)
 
-app.delete("/song", async (req, res) => {
+app.delete("/delete", async (req, res) => {
   const file = path.join(__dirname, req.body.url)
   if (fs.existsSync(file)) fs.unlinkSync(file)
   res.send("done")
@@ -53,6 +53,17 @@ app.post("/song", async (req, res) => {
     path = await soundcloud.util.downloadTrack(url, "assets/music")
   } else if (url.includes("youtube.com") || url.includes("youtu.be")) {
     path = await youtube.util.downloadMP3(url, "assets/music")
+  }
+  res.send(path)
+})
+
+app.post("/picture", async (req, res) => {
+  const url = req.body.url.trim()
+  let path = ""
+  if (url.includes("soundcloud.com")) {
+    path = await soundcloud.util.downloadSongCover(url, "assets/music")
+  } else if (url.includes("youtube.com") || url.includes("youtu.be")) {
+    path = await youtube.util.downloadThumbnail(url, "assets/music")
   }
   res.send(path)
 })

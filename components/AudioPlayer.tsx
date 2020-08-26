@@ -1,8 +1,9 @@
 import React, {useReducer, useState, useEffect, useRef} from "react"
 import Slider from "rc-slider"
 import * as Tone from "tone"
+import jsmediatags from "jsmediatags"
 import encodeWAV from "audiobuffer-to-wav"
-import func from "../structures/Functions"
+import functions from "../structures/Functions"
 import searchIcon from "../assets/icons/search-icon.png"
 import waveform from "../assets/images/wave-placeholder.png"
 import playIcon from "../assets/icons/play.png"
@@ -17,6 +18,8 @@ import eqIcon from "../assets/icons/eq.png"
 import fxIcon from "../assets/icons/fx.png"
 import resetIcon from "../assets/icons/clear.png"
 import volumeIcon from "../assets/icons/volume.png"
+import muteIcon from "../assets/icons/mute.png"
+import musicNote from "../assets/icons/music-note.png"
 import "../styles/audioplayer.less"
 
 const AudioPlayer: React.FunctionComponent = (props) => {
@@ -34,12 +37,24 @@ const AudioPlayer: React.FunctionComponent = (props) => {
     const reverbMix = useRef(null) as React.RefObject<HTMLInputElement>
     const playButton = useRef(null) as React.RefObject<HTMLImageElement>
     const volumePopup = useRef(null) as React.RefObject<HTMLDivElement>
+    const volumeRef = useRef(null) as React.RefObject<HTMLImageElement>
+    const speedPopup = useRef(null) as React.RefObject<HTMLDivElement>
+    const pitchPopup = useRef(null) as React.RefObject<HTMLDivElement>
+    const speedImg = useRef(null) as React.RefObject<HTMLImageElement>
+    const pitchImg = useRef(null) as React.RefObject<HTMLImageElement>
+    const songCover = useRef(null) as React.RefObject<HTMLImageElement>
+    const metadataText = useRef(null) as React.RefObject<HTMLDivElement>
+    const songTitle = useRef(null) as React.RefObject<HTMLHeadingElement>
+    const reverseMeta = useRef(null) as React.RefObject<HTMLDivElement>
+    const loopMeta = useRef(null) as React.RefObject<HTMLDivElement>
+    const abLoopMeta = useRef(null) as React.RefObject<HTMLDivElement>
 
     let state = {
         reverse: false,
         pitch: 0,
         speed: 1,
-        volume: 0.5,
+        volume: 1,
+        muted: false,
         speedBox: true,
         loop: false,
         abloop: false,
@@ -49,6 +64,7 @@ const AudioPlayer: React.FunctionComponent = (props) => {
         duration: 0,
         song: "",
         songName: "",
+        songCover: "",
         editCode: "",
         effects: [] as {type: string, node: Tone.ToneAudioNode}[],
         reverb: false,
@@ -105,7 +121,7 @@ const AudioPlayer: React.FunctionComponent = (props) => {
     const duration = () => {
         const current = state.grainPlayer ? source : player
         state.duration = current.buffer.duration / current.playbackRate
-        secondsTotal.current!.innerText = func.formatSeconds(state.duration)
+        secondsTotal.current!.innerText = functions.formatSeconds(state.duration)
     }
 
     const checkBuffer = () => {
@@ -137,13 +153,32 @@ const AudioPlayer: React.FunctionComponent = (props) => {
         Tone.Transport.stop()
     }
 
+    const mute = () => {
+        if (state.muted === true) {
+            state.muted = false
+            Tone.Destination.mute = false
+            volumeRef.current!.src = volumeIcon
+            volumeBar.current!.value = String(state.volume)
+            Tone.Destination.volume.value = functions.logSlider(state.volume, 2, 50)
+        } else {
+            state.muted = true
+            Tone.Destination.mute = true
+            volumeRef.current!.src = muteIcon
+            volumeBar.current!.value = "0"
+        }
+    }
+
     const volume = (event?: React.ChangeEvent<HTMLInputElement>) => {
         if (event) state.volume = Number(event.target.value)
-        Tone.Destination.volume.value = func.logSlider(state.volume, 2, 50)
+        Tone.Destination.volume.value = functions.logSlider(state.volume, 2, 50)
         if (state.volume === 0) {
             Tone.Destination.mute = true
+            state.muted = true
+            volumeRef.current!.src = muteIcon
         } else {
             Tone.Destination.mute = false
+            state.muted = false
+            volumeRef.current!.src = volumeIcon
         }
     }
 
@@ -172,11 +207,11 @@ const AudioPlayer: React.FunctionComponent = (props) => {
         } else {
             Tone.Transport.loopEnd = state.duration
         }   
-        secondsTotal.current!.innerText = func.formatSeconds(state.duration)
+        secondsTotal.current!.innerText = functions.formatSeconds(state.duration)
         if (state.reverse === true) {
-            secondsProgress.current!.innerText = func.formatSeconds(state.duration - Tone.Transport.seconds)
+            secondsProgress.current!.innerText = functions.formatSeconds(state.duration - Tone.Transport.seconds)
         } else {
-            secondsProgress.current!.innerText = func.formatSeconds(Tone.Transport.seconds)
+            secondsProgress.current!.innerText = functions.formatSeconds(Tone.Transport.seconds)
         }
     }
 
@@ -211,6 +246,7 @@ const AudioPlayer: React.FunctionComponent = (props) => {
         abSlider.current.sliderRef.style.display = "none"
         player.disconnect()
         source.disconnect().toDestination()
+        updateMetadata()
     }
 
     const loop = async () => {
@@ -225,6 +261,7 @@ const AudioPlayer: React.FunctionComponent = (props) => {
             Tone.Transport.loopStart = state.abloop ? state.loopStart : 0
             Tone.Transport.loopEnd = state.abloop ? state.loopEnd : state.duration
         }
+        updateMetadata()
     }
 
     const reverse = async (applyState?: any) => {
@@ -249,6 +286,7 @@ const AudioPlayer: React.FunctionComponent = (props) => {
             currentPlayer.reverse = true
         }
         applyAB(state.duration)
+        if (!applyState) updateMetadata()
     }
 
     useEffect(() => {
@@ -258,10 +296,10 @@ const AudioPlayer: React.FunctionComponent = (props) => {
             if (!Number.isFinite(percent)) return
             if (state.reverse === true) {
                 progressBar.current!.value = (1-percent) * 100
-                secondsProgress.current!.innerText = func.formatSeconds(state.duration - Tone.Transport.seconds)
+                secondsProgress.current!.innerText = functions.formatSeconds(state.duration - Tone.Transport.seconds)
             } else {
                 progressBar.current!.value = percent * 100
-                secondsProgress.current!.innerText = func.formatSeconds(Tone.Transport.seconds)
+                secondsProgress.current!.innerText = functions.formatSeconds(Tone.Transport.seconds)
             }
             if (!state.loop) {
                 if (Tone.Transport.seconds > state.duration - 1) {
@@ -287,6 +325,36 @@ const AudioPlayer: React.FunctionComponent = (props) => {
             if (playButton.current?.src !== pauseIcon) playButton.current!.src = pauseIcon
         })
 
+        /* Close speed and pitch boxes */
+        window.onclick = (event: any) => {
+            if (speedPopup.current?.style.display === "flex") {
+                if (!(speedPopup.current?.contains(event.target) || speedImg.current?.contains(event.target))) {
+                    if (event.target !== speedPopup.current) speedPopup.current!.style.display = "none"
+                }
+            }
+            if (pitchPopup.current?.style.display === "flex") {
+                if (!(pitchPopup.current?.contains(event.target) || pitchImg.current?.contains(event.target))) {
+                    if (event.target !== pitchPopup.current) pitchPopup.current!.style.display = "none"
+                }
+            }
+        }
+
+        /* Precision on ctrl click */
+        window.onkeydown = (event: KeyboardEvent) => {
+            if (event.ctrlKey) {
+                speedBar.current!.step = "0.01"
+                pitchBar.current!.step = "1"
+            }
+        }
+        window.onkeyup = (event: KeyboardEvent) => {
+            if (!event.ctrlKey) {
+                if (Number(speedBar.current!.value) % 0.5 !== 0) speedBar.current!.value = String(functions.round(Number(speedBar.current!.value), 0.5))
+                if (Number(pitchBar.current!.value) % 12 !== 0) pitchBar.current!.value = String(functions.round(Number(pitchBar.current!.value), 12))
+                speedBar.current!.step = "0.5"
+                pitchBar.current!.step = "12"
+            }
+        }
+
         return window.clearInterval()
     }, [])
 
@@ -295,10 +363,10 @@ const AudioPlayer: React.FunctionComponent = (props) => {
         progressBar.current!.value = percent * 100
         if (state.reverse === true) {
             Tone.Transport.seconds = (1-percent) * state.duration
-            secondsProgress.current!.innerText = func.formatSeconds(state.duration - Tone.Transport.seconds)
+            secondsProgress.current!.innerText = functions.formatSeconds(state.duration - Tone.Transport.seconds)
         } else {
             Tone.Transport.seconds = percent * state.duration
-            secondsProgress.current!.innerText = func.formatSeconds(Tone.Transport.seconds)
+            secondsProgress.current!.innerText = functions.formatSeconds(Tone.Transport.seconds)
         }
         if (Tone.Transport.state === "paused") play()
     }
@@ -308,11 +376,57 @@ const AudioPlayer: React.FunctionComponent = (props) => {
         source.detune = state.pitch * 100
     }
 
+    const updateMetadata = () => {
+        if (metadataText.current!.style.display === "none") metadataText.current!.style.display = "flex"
+        songTitle.current!.innerText = state.songName
+        songCover.current!.src = state.songCover
+        reverseMeta.current!.style.display = state.reverse ? "flex" : "none"
+        loopMeta.current!.style.display = state.loop ? "flex" : "none"
+        abLoopMeta.current!.style.display = state.abloop ? "flex" : "none"
+        /*
+        if ("mediaSession" in navigator) {
+            // @ts-ignore
+            console.log(navigator.mediaSession)
+            // @ts-ignore
+            navigator.mediaSession.metadata = new MediaMetadata({
+              title: state.songName,
+              artwork: [
+                {src: state.songCover, sizes: "128x128", type: "image/png"}
+              ]
+            })
+            // @ts-ignore
+            navigator.mediaSession.setActionHandler("play", () => play())
+            // @ts-ignore
+            navigator.mediaSession.setActionHandler("pause", () => Tone.Transport.pause())
+            // @ts-ignore
+            navigator.mediaSession.setActionHandler("seekbackward", function() {})
+            // @ts-ignore
+            navigator.mediaSession.setActionHandler("seekforward", function() {})
+            // @ts-ignore
+            navigator.mediaSession.setActionHandler("previoustrack", function() {})
+            // @ts-ignore
+            navigator.mediaSession.setActionHandler("nexttrack", function() {})
+      }*/
+    }
+
     const upload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         //window.URL.revokeObjectURL(state.song)
         const file = event.target.files?.[0]
         if (!file) return
-        state.songName = file.name
+        const tagInfo = await new Promise((resolve) => {
+            new jsmediatags.Reader(file).read({onSuccess: (tagInfo: any) => resolve(tagInfo)})   
+        }) as any
+        const picture = tagInfo.tags.picture
+        if (picture) {
+            let b64 = ""
+            for (let i = 0; i < picture.data.length; i++) {
+                b64 += String.fromCharCode(picture.data[i])
+            }
+            state.songCover = `data:${picture.format};base64,${btoa(b64)}`
+        } else {
+            state.songCover = ""
+        }
+        state.songName = file.name.replace(".mp3", "").replace(".wav", "")
         state.song = window.URL.createObjectURL(file)
         await source.buffer.load(state.song)
         await player.load(state.song)
@@ -320,7 +434,8 @@ const AudioPlayer: React.FunctionComponent = (props) => {
         duration()
         if (Tone.Transport.state === "stopped") {
             play()
-        } 
+        }
+        updateMetadata()
     }
 
     const applyAB = (duration: number) => {
@@ -360,6 +475,7 @@ const AudioPlayer: React.FunctionComponent = (props) => {
             state.abloop = false
             state.loop = false
         }
+        updateMetadata()
     }
 
     const reverb = async (event: React.ChangeEvent<HTMLInputElement>, action: string) => {
@@ -445,14 +561,13 @@ const AudioPlayer: React.FunctionComponent = (props) => {
         document.body.appendChild(a)
         a.style.display = "none"
         a.href = url
-        a.download = `${func.decodeEntities(state.songName)}${state.editCode}.wav`
+        a.download = `${functions.decodeEntities(state.songName)}${state.editCode}.wav`
         a.click()
         window.URL.revokeObjectURL(url)
     }
 
-    /* Apply saved state */
-    useEffect(() => {        
-        /*
+    /* Apply saved state
+    useEffect(() => {
         const savedState = localStorage.getItem("state")
         if (!savedState) return
         const oldSong = state.song
@@ -464,8 +579,7 @@ const AudioPlayer: React.FunctionComponent = (props) => {
         volumeBar.current!.value = String(state.volume)
         pitchBar.current!.value = String(state.pitch)
         speedBar.current!.value = String(state.speed)
-        */
-    }, [])
+    }, [])*/
 
     const submit = async (event: React.MouseEvent<HTMLButtonElement>) => {
         event.preventDefault()
@@ -473,19 +587,26 @@ const AudioPlayer: React.FunctionComponent = (props) => {
         if (!value) return
         const response = await fetch("/song", {method: "post", headers: {"Content-Type": "application/json"}, body: JSON.stringify({url: value})}).then((r) => r.text())
         if (response) {
+            const imageResponse = await fetch("/picture", {method: "post", headers: {"Content-Type": "application/json"}, body: JSON.stringify({url: value})}).then((r) => r.text())
             window.URL.revokeObjectURL(state.song)
+            window.URL.revokeObjectURL(state.songCover)
             const arrayBuffer = await fetch(response).then((r) => r.arrayBuffer())
+            const imageBuffer = await fetch(imageResponse).then((r) => r.arrayBuffer())
             const blob = new Blob([new DataView(arrayBuffer)], {type: "audio/mpeg"})
-            state.songName = response.replace("assets\\music\\", "").replace(".mp3", "")
+            const imageBlob = new Blob([new DataView(imageBuffer)], {type: "image/png"})
+            state.songName = response.replace("assets\\music\\", "").replace("assets/music/", "").replace(".mp3", "")
             state.song = window.URL.createObjectURL(blob)
+            state.songCover = window.URL.createObjectURL(imageBlob)
             await source.buffer.load(state.song)
             await player.load(state.song)
             await Tone.loaded()
             duration()
+            updateMetadata()
             if (Tone.Transport.state === "stopped") {
                 play()
             } 
-            await fetch("/song", {method: "delete", headers: {"Content-Type": "application/json"}, body: JSON.stringify({url: response})})
+            await fetch("/delete", {method: "delete", headers: {"Content-Type": "application/json"}, body: JSON.stringify({url: response})})
+            await fetch("/delete", {method: "delete", headers: {"Content-Type": "application/json"}, body: JSON.stringify({url: imageResponse})})
         }
         searchBox.current!.value = ""
     }
@@ -498,44 +619,69 @@ const AudioPlayer: React.FunctionComponent = (props) => {
                 <button onClick={() => uploadFile.current?.click()} className="upload-button"><span>Upload</span></button>
                 <button onClick={() => download()} className="download-button"><span>Download</span></button>
                 <form className="search-bar">
-                    <input type="text" ref={searchBox} placeholder="Soundcloud or Youtube link..." className="search-box" spellCheck="false"/>
+                    <input type="text" ref={searchBox} placeholder="Youtube or Soundcloud link..." className="search-box" spellCheck="false"/>
                     <button onClick={(event) => submit(event)} className="search-button"><img src={searchIcon} width="40" height="40" className="search-icon"/></button>
                 </form>
             </section>
 
+            {/* Metadata */}
+            <section className="metadata">
+                <div className="metadata-container">
+                    <div className="metadata-text" ref={metadataText} style={({display: "none"})}>
+                        <div className="meta-row">
+                            <img src={musicNote}/><h2 ref={songTitle} className="meta-text"></h2>
+                        </div>
+                        <div ref={reverseMeta} className="meta-row" style={({display: "none"})}>
+                            <img src={reverseIcon} width="60" height="60"/><h3 className="meta-text-small">Reverse Mode</h3>
+                        </div>
+                        <div ref={loopMeta} className="meta-row" style={({display: "none"})}>
+                            <img src={loopIcon} width="60" height="60"/><h3 className="meta-text-small">Loop Mode</h3>
+                        </div>
+                        <div ref={abLoopMeta} className="meta-row" style={({display: "none"})}>
+                            <img src={abLoopIcon} width="60" height="60"/><h3 className="meta-text-small">AB Loop Mode</h3>
+                        </div>
+                    </div>
+                    <img ref={songCover} className="song-cover"/>
+                </div>
+            </section>
+
             {/* Player */}
             <section className="player">
-                <progress ref={progressBar} max="100" onClick={(event) => seek(event)} defaultValue="0" value="0">
-                    <img src={waveform}/>
-                </progress>
-                <div className="ab-bar" style={({display: "none"})}>
+                <div className="player-container">
+                    <progress ref={progressBar} max="100" onClick={(event) => seek(event)} defaultValue="0" value="0">
+                        <img src={waveform}/>
+                    </progress>
                     <Slider.Range ref={abSlider} min={0} max={100} defaultValue={[0, 100]} onAfterChange={(value) => abloop(value)} style={({display: "none"})}/>
-                </div>
-                <div className="player-buttons">
-                    <img src={playIcon} ref={playButton} onClick={() => play()} width="60" height="60"/>
-                    <img src={stopIcon} onClick={() => stop()} width="60" height="60"/>
-                    <img src={reverseIcon} onClick={() => reverse()} width="60" height="60"/>
-                    <div className="speed-popup" style={({display: "none"})}>
-                        <input type="range" ref={speedBar} onChange={(event) => speed(event)} min="0.5" max="4" step="0.5" defaultValue="1"/>
-                        <input type="checkbox" ref={speedCheckbox} defaultChecked onChange={() => speedBox()}/>
-                    </div>
-                    <img src={speedIcon} onClick={() => ""} width="60" height="60"/>
-                    <div className="pitch-popup" style={({display: "none"})}>
-                        <input type="range" ref={pitchBar} onChange={(event) => pitch(event)} min="-24" max="24" step="12" defaultValue="0"/>
-                    </div>
-                    <img src={pitchIcon} onClick={() => ""} width="60" height="60"/>
-                    <img src={loopIcon} onClick={() => loop()} width="60" height="60"/>
-                    <img src={abLoopIcon} onClick={() => toggleAB()} width="60" height="60"/>
-                    <img src={eqIcon} onClick={() => ""} width="60" height="60"/>
-                    <img src={fxIcon} onClick={() => ""} width="60" height="60"/>
-                    <img src={resetIcon} onClick={() => reset()} width="60" height="60"/>
-                    <div onMouseLeave={() => volumePopup.current!.style.display = "none"}>
-                        <div className="volume-popup" ref={volumePopup} style={({display: "none"})}>
-                            <input type="range" ref={volumeBar} onChange={(event) => volume(event)} min="0" max="1" step="0.05" defaultValue="1" className="volume-range"/>
+                    <div className="player-buttons">
+                        <img src={playIcon} ref={playButton} onClick={() => play()} width="60" height="60"/>
+                        <img src={stopIcon} onClick={() => stop()} width="60" height="60"/>
+                        <img src={reverseIcon} onClick={() => reverse()} width="60" height="60"/>
+                        <div className="speed-popup-container" ref={speedPopup} style={({display: "none"})}>
+                            <div className="speed-popup">
+                                <input type="range" ref={speedBar} onChange={(event) => speed(event)} min="0.5" max="4" step="0.5" defaultValue="1" className="speed-bar"/>
+                                <div className="speed-checkbox-container">
+                                <p className="speed-text">Pitch?</p><input type="checkbox" ref={speedCheckbox} defaultChecked onChange={() => speedBox()} className="speed-checkbox"/>
+                                </div>       
+                            </div>
                         </div>
-                        <img src={volumeIcon} onMouseEnter={() => volumePopup.current!.style.display = "flex"} width="60" height="60"/>
+                        <img src={speedIcon} ref={speedImg} onClick={() => speedPopup.current!.style.display === "flex" ? speedPopup.current!.style.display = "none" : speedPopup.current!.style.display = "flex"} width="60" height="60"/>
+                        <div className="pitch-popup" ref={pitchPopup} style={({display: "none"})}>
+                            <input type="range" ref={pitchBar} onChange={(event) => pitch(event)} min="-24" max="24" step="12" defaultValue="0" className="pitch-bar"/>
+                        </div>
+                        <img src={pitchIcon} ref={pitchImg} onClick={() => pitchPopup.current!.style.display === "flex" ? pitchPopup.current!.style.display = "none" : pitchPopup.current!.style.display = "flex"} width="60" height="60"/>
+                        <img src={loopIcon} onClick={() => loop()} width="60" height="60"/>
+                        <img src={abLoopIcon} onClick={() => toggleAB()} width="60" height="60"/>
+                        {/*<img src={eqIcon} onClick={() => ""} width="60" height="60"/>
+                        <img src={fxIcon} onClick={() => ""} width="60" height="60"/>*/}
+                        <img src={resetIcon} onClick={() => reset()} width="60" height="60"/>
+                        <div onMouseLeave={() => volumePopup.current!.style.display = "none"}>
+                            <div className="volume-popup" ref={volumePopup} style={({display: "none"})}>
+                                <input type="range" ref={volumeBar} onChange={(event) => volume(event)} min="0" max="1" step="0.05" defaultValue="1" className="volume-range"/>
+                            </div>
+                            <img src={volumeIcon} ref={volumeRef} onClick={() => mute()} onMouseEnter={() => volumePopup.current!.style.display = "flex"} width="60" height="60"/>
+                        </div>
+                        <p className="player-text"><span ref={secondsProgress}>0:00</span> <span>/</span> <span ref={secondsTotal}>0:00</span></p>
                     </div>
-                    <p className="player-text"><span ref={secondsProgress}>0:00</span> <span>/</span> <span ref={secondsTotal}>0:00</span></p>
                 </div>
             </section>
             {/*
