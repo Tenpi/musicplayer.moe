@@ -18,10 +18,10 @@ import eqIcon from "../assets/icons/eq.png"
 import fxIcon from "../assets/icons/fx.png"
 import resetIcon from "../assets/icons/clear.png"
 import volumeIcon from "../assets/icons/volume.png"
+import volumeLowIcon from "../assets/icons/volume-low.png"
 import muteIcon from "../assets/icons/mute.png"
 import musicNote from "../assets/icons/music-note.png"
 import "../styles/audioplayer.less"
-import { rejects } from "assert"
 
 const AudioPlayer: React.FunctionComponent = (props) => {
     const progressBar = useRef(null) as React.RefObject<HTMLProgressElement>
@@ -180,7 +180,11 @@ const AudioPlayer: React.FunctionComponent = (props) => {
         } else {
             Tone.Destination.mute = false
             state.muted = false
-            volumeRef.current!.src = volumeIcon
+            if (state.volume <= 0.5) {
+                volumeRef.current!.src = volumeLowIcon
+            } else {
+                volumeRef.current!.src = volumeIcon
+            }
         }
     }
 
