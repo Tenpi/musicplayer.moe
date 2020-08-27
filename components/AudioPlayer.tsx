@@ -21,6 +21,7 @@ import volumeIcon from "../assets/icons/volume.png"
 import muteIcon from "../assets/icons/mute.png"
 import musicNote from "../assets/icons/music-note.png"
 import "../styles/audioplayer.less"
+import { rejects } from "assert"
 
 const AudioPlayer: React.FunctionComponent = (props) => {
     const progressBar = useRef(null) as React.RefObject<HTMLProgressElement>
@@ -66,6 +67,7 @@ const AudioPlayer: React.FunctionComponent = (props) => {
         songName: "",
         songCover: "",
         editCode: "",
+        download: "",
         effects: [] as {type: string, node: Tone.ToneAudioNode}[],
         reverb: false,
         reverbMix: 0,
@@ -389,10 +391,10 @@ const AudioPlayer: React.FunctionComponent = (props) => {
         //window.URL.revokeObjectURL(state.song)
         const file = event.target.files?.[0]
         if (!file) return
-        const tagInfo = await new Promise((resolve) => {
-            new jsmediatags.Reader(file).read({onSuccess: (tagInfo: any) => resolve(tagInfo)})   
-        }) as any
-        const picture = tagInfo.tags.picture
+        const tagInfo = await new Promise((resolve, reject) => {
+            new jsmediatags.Reader(file).read({onSuccess: (tagInfo: any) => resolve(tagInfo), onError: (error: any) => reject(error)})   
+        }).catch(() => null) as any
+        const picture = tagInfo?.tags.picture
         if (picture) {
             let b64 = ""
             for (let i = 0; i < picture.data.length; i++) {
@@ -520,7 +522,7 @@ const AudioPlayer: React.FunctionComponent = (props) => {
     const download = async () => {
         if (!checkBuffer()) return
         await Tone.loaded()
-        console.log("here")
+        window.URL.revokeObjectURL(state.download)
         let duration = state.duration
         let start = 0
         if (state.abloop) {
@@ -528,18 +530,17 @@ const AudioPlayer: React.FunctionComponent = (props) => {
             duration = state.loopEnd - state.loopStart
         }
         const buffer = await render(start, duration)
-        console.log("buffer done")
         const wav = encodeWAV(buffer)
-        console.log("wav done")
+        console.error(wav)
         const blob = new Blob([new DataView(wav)], {type: "audio/wav"})
-        const url = window.URL.createObjectURL(blob)
+        state.download = window.URL.createObjectURL(blob)
         const a = document.createElement("a")
         document.body.appendChild(a)
         a.style.display = "none"
-        a.href = url
+        a.href = state.download
         a.download = `${functions.decodeEntities(state.songName)}${state.editCode}.wav`
         a.click()
-        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
     }
 
     /* Apply saved state
