@@ -236,10 +236,12 @@ const AudioPlayer: React.FunctionComponent = (props) => {
         const duration = state.duration
         const song = state.song
         const songName = state.songName
+        const songCover = state.songCover
         state = {...initialState}
         state.duration = duration
         state.song = song
         state.songName = songName
+        state.songCover = songCover
         source.playbackRate = state.speed
         player.playbackRate = state.speed
         speedBar.current!.value = String(state.speed)
