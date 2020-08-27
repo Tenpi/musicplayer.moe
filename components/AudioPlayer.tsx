@@ -159,6 +159,7 @@ const AudioPlayer: React.FunctionComponent = (props) => {
         if (state.muted === true) {
             state.muted = false
             Tone.Destination.mute = false
+            if (state.volume === 0) state.volume = 1
             volumeBar.current!.value = String(state.volume)
             Tone.Destination.volume.value = functions.logSlider(state.volume, 2, 50)
             if (state.volume <= 0.5) {
