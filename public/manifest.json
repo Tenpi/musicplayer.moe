@@ -4,7 +4,7 @@
     "description": "This is a music player that can apply many effects to audio, such as reverse, time stretching, and pitch shifting.",
     "icons": [
       {
-        "src": "images/favicon.gif",
+        "src": "assets/icons/favicon.gif",
         "sizes": "192x192",
         "type": "image/gif"
       }
