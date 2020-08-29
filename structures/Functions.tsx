@@ -78,4 +78,11 @@ export default class Functions {
     const inverse = 1.0 / step
     return Math.round(value * inverse) / inverse
   }
+
+  /** Prevent image dragging */
+  public static preventDragging = () => {
+    document.querySelectorAll("img").forEach((img) => {
+      img.draggable = false
+    })
+  }
 }
