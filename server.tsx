@@ -38,7 +38,7 @@ if (process.env.TESTING === "yes") {
 }
 
 app.use(express.static(path.join(__dirname, "./public")))
-app.use(express.static(path.join(__dirname, "./dist")))
+app.use(express.static(path.join(__dirname, "./dist"), {index: false}))
 app.use("/assets", express.static(path.join(__dirname, "./assets")))
 
 const youtube = new Youtube(process.env.YOUTUBE_API_KEY!)
@@ -75,8 +75,9 @@ app.post("/picture", async (req, res) => {
 app.get("*", function(req, res) {
   res.setHeader("Content-Type", mime.getType(req.path) ?? "")
   const html = renderToString(<Router location={req.url}><App/></Router>)
-  const document = fs.readFileSync(path.join(__dirname, "./index.html"), {encoding: "utf-8"})
-  res.send(document.replace(`<div id="app" class="dark-theme"></div>`, `<div id="app" class="dark-theme">${html}</div>`))
+  const data = fs.readFileSync(path.join(__dirname, "./dist/index.html"), {encoding: "utf-8"})
+  const document = data.replace(`<div id="app" class="dark-theme"></div>`, `<div id="app" class="dark-theme">${html}</div>`)
+  res.send(document)
 })
 
 app.listen(process.env.PORT || 8080, () => console.log("Started the website server!"))
