@@ -74,7 +74,7 @@ app.post("/picture", async (req, res) => {
 
 app.get("*", function(req, res) {
   res.setHeader("Content-Type", mime.getType(req.path) ?? "")
-  const html = renderToString(<Router><App/></Router>)
+  const html = renderToString(<Router location={req.url}><App/></Router>)
   const document = fs.readFileSync(path.join(__dirname, "./index.html"), {encoding: "utf-8"})
   res.send(document.replace(`<div id="app" class="dark-theme"></div>`, `<div id="app" class="dark-theme">${html}</div>`))
 })
