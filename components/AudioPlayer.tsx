@@ -77,10 +77,14 @@ const AudioPlayer: React.FunctionComponent = (props) => {
 
     const initialState = {...state}
 
-    let source = new Tone.GrainPlayer().sync().start().toDestination()
-    let player = new Tone.Player().sync().start()
-    source.grainSize = 0.1
-    source.overlap = 0.1
+    let source
+    let player
+    if (typeof window !== "undefined") {
+        source = new Tone.GrainPlayer().sync().start().toDestination()
+        player = new Tone.Player().sync().start()
+        source.grainSize = 0.1
+        source.overlap = 0.1
+    }
 
     const removeEffect = (type: string) => {
         const index = state.effects.findIndex((e) => e.type === type)

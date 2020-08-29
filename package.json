@@ -2,12 +2,11 @@
   "name": "music-player",
   "version": "0.0.1",
   "description": "A music player",
-  "main": "server.js",
-  "type": "module",
+  "main": "dist/server.js",
   "scripts": {
-    "start": "npm run clean && npm run bundle-web && node --max_old_space_size=4096 --experimental-modules server.js",
-    "bundle-web": "webpack --env.platform=web --config webpack.config.cjs",
-    "bundle-server": "webpack --env.platform=server --config webpack.config.cjs",
+    "start": "npm run clean && npm run bundle-web && npm run bundle-server && node --max_old_space_size=4096 dist/server.js",
+    "bundle-web": "webpack --env.platform=web",
+    "bundle-server": "webpack --env.platform=server",
     "clean": "del-cli ./dist"
   },
   "engines": {

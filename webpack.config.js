@@ -10,6 +10,7 @@ const Dotenv = require("dotenv-webpack")
 const exclude = [/node_modules/, /dist/]
 
 module.exports = (env, argv) => {
+    if (env.platform === "web") exclude.push(/server.tsx/)
     const base = {
         target: "web",
         entry: "./index",
@@ -26,17 +27,12 @@ module.exports = (env, argv) => {
                 {test: /\.html$/, exclude, use: [{loader: "html-loader", query: {minimize: false}}]},
                 {test: /\.css$/, exclude, use: [{loader: MiniCssExtractPlugin.loader, options: {hmr: env.platform === "web"}}, "css-loader"]},
                 {test: /\.less$/, exclude, use: [{loader: MiniCssExtractPlugin.loader, options: {hmr: env.platform === "web"}}, "css-loader", {loader: "less-loader"}]},
-                {test: /\.tsx?$/, exclude, use: [{loader: "ts-loader", options: {transpileOnly: true}}]}
+                {test: /\.(tsx?|jsx?)$/, exclude, use: [{loader: "ts-loader", options: {transpileOnly: true}}]}
             ]
         },
         plugins: [
             new Dotenv(),
             new ForkTsCheckerWebpackPlugin(),
-            new HtmlWebpackPlugin({
-                template: path.resolve(__dirname, "./index.html"),
-                favicon: path.resolve(__dirname, "./assets/icons/favicon.gif"),
-                minify: false
-            }),
             new webpack.HotModuleReplacementPlugin(),
             new webpack.HashedModuleIdsPlugin(),
             new MiniCssExtractPlugin({
@@ -44,6 +40,16 @@ module.exports = (env, argv) => {
                 chunkFilename: "styles.css"
             })
         ]
+    }
+
+    if (env.platform === "web") {
+        const plugins = [
+            new HtmlWebpackPlugin({
+                template: path.resolve(__dirname, "./index.html"),
+                minify: false
+            }),
+        ]
+        base.plugins = [...base.plugins, ...plugins]
     }
 
     if (env.platform === "server") {
