@@ -47,7 +47,7 @@ module.exports = (env, argv) => {
             new HtmlWebpackPlugin({
                 template: path.resolve(__dirname, "./index.html"),
                 minify: false
-            }),
+            })
         ]
         base.plugins = [...base.plugins, ...plugins]
     }
