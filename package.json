@@ -12,6 +12,10 @@
   "engines": {
     "node": ">=13.10.0"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Tenpi/Music-Player"
+  },
   "author": "Tenpi",
   "license": "MIT",
   "dependencies": {
@@ -52,7 +56,7 @@
     "react-string-replace": "^0.4.4",
     "regenerator-runtime": "^0.13.7",
     "rsuite": "^4.8.0",
-    "soundcloud.ts": "^0.3.0",
+    "soundcloud.ts": "^0.3.1",
     "terser-webpack-plugin": "^4.1.0",
     "tone": "^14.7.39",
     "ts-loader": "^8.0.2",
