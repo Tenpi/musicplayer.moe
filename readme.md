@@ -1,6 +1,6 @@
 ## Music Player
 
-![Hibiki](https://github.com/Tenpi/Music-Player/blob/master/assets/images/hibiki-chibi.png?raw=true)
+![Hibiki](https://github.com/Tenpi/Music-Player/blob/master/assets/images/website-img.png?raw=true)
 
 This is a music player with many cool effects.
 
