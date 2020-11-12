@@ -67,6 +67,6 @@
     "webpack-hot-middleware": "^2.25.0",
     "webpack-node-externals": "^2.5.1",
     "worklet-loader": "^1.0.0",
-    "youtube.ts": "^0.1.7"
+    "youtube.ts": "^0.1.9"
   }
 }
