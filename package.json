@@ -4,7 +4,9 @@
   "description": "A music player",
   "main": "dist/server.js",
   "scripts": {
-    "start": "npm run clean && npm run bundle-web && npm run bundle-server && node --max_old_space_size=4096 dist/server.js",
+    "start": "npm run postinstall && npm run web",
+    "web": "node --max_old_space_size=4096 dist/server.js",
+    "postinstall": "npm run clean && npm run bundle-web && npm run bundle-server",
     "bundle-web": "webpack --env.platform=web",
     "bundle-server": "webpack --env.platform=server",
     "clean": "del-cli ./dist"
