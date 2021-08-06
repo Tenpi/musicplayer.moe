@@ -35,7 +35,7 @@ const Footer: React.FunctionComponent = (props) => {
                 </div>
                 <div className="footer-column">
                         <h3 className="footer-text">Source Code</h3>
-                        <img src={github} onClick={() => window.open("https://github.com/Tenpi/Music-Player", "_blank")} className="footer-img" width="30" height="30"/>
+                        <img src={github} onClick={() => window.open("https://github.com/Tenpi/Music-Player-Web", "_blank")} className="footer-img" width="30" height="30"/>
                 </div>
                 <div className="footer-column">
                     <img src={hibikiChibi} className="hibiki-chibi" width="141" height="200"/>
