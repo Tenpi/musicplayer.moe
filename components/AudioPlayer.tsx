@@ -356,22 +356,21 @@ const AudioPlayer: React.FunctionComponent = (props) => {
             }
         }
 
-        /* Precision on ctrl click */
+        /* Precision on shift click */
         window.onkeydown = (event: KeyboardEvent) => {
-            if (event.ctrlKey) {
+            if (event.shiftKey) {
                 speedBar.current!.step = "0.01"
                 pitchBar.current!.step = "1"
             }
         }
         window.onkeyup = (event: KeyboardEvent) => {
-            if (!event.ctrlKey) {
+            if (!event.shiftKey) {
                 if (Number(speedBar.current!.value) % 0.5 !== 0) speedBar.current!.value = String(functions.round(Number(speedBar.current!.value), 0.5))
                 if (Number(pitchBar.current!.value) % 12 !== 0) pitchBar.current!.value = String(functions.round(Number(pitchBar.current!.value), 12))
                 speedBar.current!.step = "0.5"
                 pitchBar.current!.step = "12"
             }
         }
-
         return window.clearInterval()
     }, [])
 
@@ -577,6 +576,7 @@ const AudioPlayer: React.FunctionComponent = (props) => {
         event.preventDefault()
         const value = searchBox.current?.value
         if (!value) return
+        searchBox.current!.value = ""
         const response = await fetch("/song", {method: "post", headers: {"Content-Type": "application/json"}, body: JSON.stringify({url: value})}).then((r) => r.text())
         if (response) {
             const imageResponse = await fetch("/picture", {method: "post", headers: {"Content-Type": "application/json"}, body: JSON.stringify({url: value})}).then((r) => r.text())
@@ -600,7 +600,6 @@ const AudioPlayer: React.FunctionComponent = (props) => {
             await fetch("/delete", {method: "delete", headers: {"Content-Type": "application/json"}, body: JSON.stringify({url: response})})
             await fetch("/delete", {method: "delete", headers: {"Content-Type": "application/json"}, body: JSON.stringify({url: imageResponse})})
         }
-        searchBox.current!.value = ""
     }
 
     /* JS Media Queries */

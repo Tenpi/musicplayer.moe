@@ -41,8 +41,8 @@ app.use(express.static(path.join(__dirname, "./public")))
 app.use(express.static(path.join(__dirname, "./dist"), {index: false}))
 app.use("/assets", express.static(path.join(__dirname, "./assets")))
 
-const youtube = new Youtube(process.env.YOUTUBE_API_KEY!)
-const soundcloud = new Soundcloud(process.env.SOUNDCLOUD_CLIENT_ID)
+const youtube = new Youtube()
+const soundcloud = new Soundcloud()
 
 app.delete("/delete", async (req, res) => {
   const file = path.join(__dirname, req.body.url)
