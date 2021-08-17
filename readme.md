@@ -1,8 +1,8 @@
-## Music Player
+## Music Player Website
 
 ![Hibiki](https://github.com/Tenpi/Music-Player-Web/blob/master/assets/images/website-img.png?raw=true)
 
-This is a music player with many cool effects.
+This is a music player site with many cool effects.
 
 ### Features:
 - Play, pause, stop, loop, and seek audio
@@ -12,4 +12,7 @@ This is a music player with many cool effects.
 - Pitch shifting in real time
 - Render and download the audio
 
-Website: https://weeb-player.herokuapp.com/
+Website: https://musicplayer.moe
+
+### Also See:
+- [Music Player](https://github.com/Tenpi/Music-Player)

@@ -56,7 +56,7 @@ const AudioPlayer: React.FunctionComponent = (props) => {
         speed: 1,
         volume: 1,
         muted: false,
-        speedBox: true,
+        preservesPitch: false,
         loop: false,
         abloop: false,
         loopStart: 0,
@@ -80,8 +80,8 @@ const AudioPlayer: React.FunctionComponent = (props) => {
     let source
     let player
     if (typeof window !== "undefined") {
-        source = new Tone.GrainPlayer().sync().start().toDestination()
-        player = new Tone.Player().sync().start()
+        player = new Tone.Player().sync().start().toDestination()
+        source = new Tone.GrainPlayer().sync().start()
         source.grainSize = 0.1
         source.overlap = 0.1
     }
@@ -205,7 +205,7 @@ const AudioPlayer: React.FunctionComponent = (props) => {
             currentSource = applyState.source
             currentPlayer = applyState.player
         }
-        if (!state.speedBox) {
+        if (!state.preservesPitch) {
             state.grainPlayer = false
             currentPlayer.playbackRate = state.speed
             applyEffects()
@@ -231,8 +231,8 @@ const AudioPlayer: React.FunctionComponent = (props) => {
     }
 
     const speedBox = () => {
-        state.speedBox = !state.speedBox
-        speedCheckbox.current!.checked = state.speedBox
+        state.preservesPitch = !state.preservesPitch
+        speedCheckbox.current!.checked = !state.preservesPitch
         return speed()
     }
 
@@ -249,7 +249,7 @@ const AudioPlayer: React.FunctionComponent = (props) => {
         source.playbackRate = state.speed
         player.playbackRate = state.speed
         speedBar.current!.value = String(state.speed)
-        speedCheckbox.current!.checked = state.speedBox
+        speedCheckbox.current!.checked = !state.preservesPitch
         source.detune = state.pitch
         pitchBar.current!.value = String(state.pitch)
         source.reverse = state.reverse
@@ -424,6 +424,9 @@ const AudioPlayer: React.FunctionComponent = (props) => {
         await player.load(state.song)
         await Tone.loaded()
         duration()
+        if (Tone.Transport.state === "started" || Tone.Transport.state === "paused") {
+            stop()
+        }
         if (Tone.Transport.state === "stopped") {
             play()
         }
@@ -594,6 +597,9 @@ const AudioPlayer: React.FunctionComponent = (props) => {
             await Tone.loaded()
             duration()
             updateMetadata()
+            if (Tone.Transport.state === "started" || Tone.Transport.state === "paused") {
+                stop()
+            }
             if (Tone.Transport.state === "stopped") {
                 play()
             } 
