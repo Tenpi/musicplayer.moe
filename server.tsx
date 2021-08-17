@@ -73,6 +73,9 @@ app.post("/picture", async (req, res) => {
 })
 
 app.get("*", function(req, res) {
+  if (req.hostname.includes("herokuapp")) {
+    res.redirect(301, `https://musicplayer.moe${req.path}`)
+  }
   res.setHeader("Content-Type", mime.getType(req.path) ?? "")
   const html = renderToString(<Router location={req.url}><App/></Router>)
   const data = fs.readFileSync(path.join(__dirname, "./dist/index.html"), {encoding: "utf-8"})
